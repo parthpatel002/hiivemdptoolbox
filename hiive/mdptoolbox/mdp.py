@@ -875,7 +875,7 @@ class PolicyIteration(MDP):
             # of iterations has been reached then stop
 
             # Error, rewards, and time for every iteration and number of PI steps which might be specific to my setup
-            if nd == 0:
+            if nd == 0 or (error < 1e-10):
                 if self.verbose:
                     print(_MSG_STOP_UNCHANGING_POLICY)
                 break
