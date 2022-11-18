@@ -1085,7 +1085,7 @@ class QLearning(MDP):
                  alpha=0.1, alpha_decay=0.99, alpha_min=0.001,
                  epsilon=1.0, epsilon_min=0.1, epsilon_decay=0.99,
                  n_iter=10000, skip_check=False, iter_callback=None,
-                 run_stat_frequency=None):
+                 run_stat_frequency=None, init='zeros', factor=100):
         # Initialise a Q-learning MDP.
 
         # The following check won't be done in MDP()'s initialisation, so let's
@@ -1115,7 +1115,10 @@ class QLearning(MDP):
         self.epsilon_min = _np.clip(epsilon_min, 0., 1.)
 
         # Initialisations
-        self.Q = _np.zeros((self.S, self.A))
+        if init == 'zeros':
+            self.Q = _np.zeros((self.S, self.A))
+        elif init == 'factor':
+            self.Q = _np.ones((self.S, self.A)) * factor
 
         self.run_stats = []
         self.error_mean = []
