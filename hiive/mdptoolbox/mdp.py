@@ -1085,7 +1085,7 @@ class QLearning(MDP):
                  alpha=0.1, alpha_decay=0.99, alpha_min=0.001,
                  epsilon=1.0, epsilon_min=0.1, epsilon_decay=0.99,
                  n_iter=10000, skip_check=False, iter_callback=None,
-                 run_stat_frequency=None, init='zeros', factor=100):
+                 run_stat_frequency=None, init='zeros', factor=100, policy_type='eps-greedy'):
         # Initialise a Q-learning MDP.
 
         # The following check won't be done in MDP()'s initialisation, so let's
@@ -1127,6 +1127,7 @@ class QLearning(MDP):
         self.iter_callback = iter_callback
         self.S_freq = _np.zeros((self.S, self.A))
         self.run_stat_frequency = max(1, self.max_iter // 10000) if run_stat_frequency is None else run_stat_frequency
+        self.policy_type = policy_type
 
     def run(self):
 
@@ -1156,13 +1157,37 @@ class QLearning(MDP):
 
             # Action choice : greedy with increasing probability
             # The agent takes random actions for probability ε and greedy action for probability (1-ε).
-            pn = _np.random.random()
-            if pn < self.epsilon:
-                a = _np.random.randint(0, self.A)
-            else:
-                # optimal_action = self.Q[s, :].max()
+            if self.policy_type == 'eps-greedy':
+                pn = _np.random.random()
+                if pn < self.epsilon:
+                    a = _np.random.randint(0, self.A)
+                else:
+                    # optimal_action = self.Q[s, :].max()
+                    a = self.Q[s, :].argmax()
+            elif self.policy_type == 'greedy':
                 a = self.Q[s, :].argmax()
-
+            elif self.policy_type == 'random':
+                a = _np.random.randint(0, self.A)
+            elif self.policy_type == 'thompson-sampling':
+                b = self.Q[s, :]
+                c = _np.zeros(self.A)
+                for idx in range(self.A):
+                    cnt = 0
+                    for jdx in range(self.A):
+                        if b[idx] > b[jdx]:
+                            cnt += 1
+                    c[idx] = cnt
+                if _np.sum(c) == 0:
+                    a = _np.random.randint(0, self.A)
+                else:
+                    c = c / _np.sum(c)
+                    probability = _np.random.random()
+                    p = 0
+                    a = -1
+                    while (p < probability) and (a < (self.A - 1)):
+                        a = a + 1
+                        p = p + c[a]
+            
             # Simulating next state s_new and reward associated to <s,s_new,a>
             p_s_new = _np.random.random()
             p = 0
